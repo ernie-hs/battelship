@@ -1,6 +1,6 @@
-# threejs cljs template
+# BATTLESHIP
 
-a threejs startup shadow-cljs project.  a rotating box with light, shadows and controls with a simple clojure test case.
+a crappy version of battleship for the fun of it.
 
 ## command line
 
