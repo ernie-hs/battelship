@@ -1,7 +1,7 @@
-(ns hello-three.core
+(ns battleship.core
   (:require [three :as t]
             ["three/addons/controls/ArcballControls.js" :refer [ArcballControls]]
-            [hello-three.utils :as u]))
+            [battleship.utils :as u]))
 
 (defn get-window-dims
  "get the dimensions of js/window"

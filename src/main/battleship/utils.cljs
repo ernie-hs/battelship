@@ -1,4 +1,4 @@
-(ns hello-three.utils
+(ns battleship.utils
   (:require [three :as t]))
 
 (defprotocol Convienience

@@ -1,7 +1,7 @@
-(ns hello-three.utils-test
+(ns battleship.utils-test
   (:require [cljs.test :refer (deftest are)]
             [three :as t]
-            [hello-three.utils :as u]))
+            [battleship.utils :as u]))
 
 (deftest convienience-functions
   (let [obj (t/Mesh.)]

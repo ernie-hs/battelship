@@ -20,15 +20,15 @@
                 :output-dir "public/js/compiled"
                 :asset-path "/js/compiled"
 
-                :modules {:main {:init-fn hello-three.core/init}}
+                :modules {:main {:init-fn battleship.core/init}}
         
                 :compiler-options {:infer-externs true}
         
                 :devtools {;; before live-reloading any code call this function
-                           :before-load hello-three.core/stop
+                           :before-load battleship.core/stop
 
                            ;; after live-reloading finishes call this function
-                           :after-load hello-three.core/start
+                           :after-load battleship.core/start
 
                            ;; serve the public directory over http at port 8700
                            :http-root    "public"
