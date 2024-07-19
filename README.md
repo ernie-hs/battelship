@@ -2,6 +2,8 @@
 
 a crappy version of battleship for the fun of it.
 
+**work in progress**
+
 ## command line
 
 start with,

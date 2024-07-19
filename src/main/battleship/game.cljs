@@ -45,8 +45,8 @@
                                           :remaining-ships (inc (:remaining-ships p)))))]
     (assoc updated-game
            :ready (apply = ship-count (map :remaining-ships (:players updated-game))))))
-  
-   
+
+
 (comment
 
   (apply = 2 [2 2 2 2])

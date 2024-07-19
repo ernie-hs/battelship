@@ -29,54 +29,65 @@
         (is (= "ernie" (:name (nth players 0))))
         (is (= :human (:type (nth players 0))))
         (is (= "computer" (:name (nth players 1))))
-        (is (= :computer (:type (nth players 1))))))))
+        (is (= :computer (:type (nth players 1)))))))
+
+  (deftest create-game-with-less-than-two-players
+    (is (thrown? (g/create-game [{:name "only me!"}] 5 {:w 10 :h 10})) "must have at least two players?!")))
 
 (testing "player ship placement"
-  (let [game (atom (g/create-game [{:name "ernie"} {:name "T2000"}] 2 {:w 5 :h 5}))]
 
     (deftest place-ships
+      (let [game (atom (g/create-game [{:name "ernie"} {:name "T2000"}] 2 {:w 5 :h 5}))]
 
-      ;; player 0
-      (reset! game (g/place-ship @game 0 {:x 0 :y 0} {:area {:w 1 :h 1} :v 2}))
-      (is (some? @game))
-      (is (false? (:ready @game)))
-      (let [player (nth (:players @game) 0)]
-        (is (= 0 (:turns player)))
-        (is (= 1 (:remaining-ships player)) "player 0 should have 1 ship")
-        (is (= 2 (nth (-> player :grid :data) 0))))
-      
-      (reset! game (g/place-ship @game 0 {:x 2 :y 4} {:area {:w 1 :h 1} :v 2}))
-      (is (some? @game))
-      (is (false? (:ready @game)))
-      (let [player (nth (:players @game) 0)]
-        (is (= 0 (:turns player)))
-        (is (= 2 (:remaining-ships player)) "player 0 should have 2 ships")
-        (is (= 2 (nth (-> player :grid :data) 22))))
+        ;; player 0
+        (reset! game (g/place-ship @game 0 {:x 0 :y 0} {:area {:w 1 :h 1} :v 2}))
+        (is (some? @game))
+        (is (false? (:ready @game)))
+        (let [player (nth (:players @game) 0)]
+          (is (= 0 (:turns player)))
+          (is (= 1 (:remaining-ships player)) "player 0 should have 1 ship")
+          (is (= 2 (nth (-> player :grid :data) 0))))
+          
+        (reset! game (g/place-ship @game 0 {:x 2 :y 4} {:area {:w 1 :h 1} :v 2}))
+        (is (some? @game))
+        (is (false? (:ready @game)))
+        (let [player (nth (:players @game) 0)]
+          (is (= 0 (:turns player)))
+          (is (= 2 (:remaining-ships player)) "player 0 should have 2 ships")
+          (is (= 2 (nth (-> player :grid :data) 22))))
 
-      ;;player 1
-      (reset! game (g/place-ship @game 1 {:x 1 :y 1} {:area {:w 1 :h 1} :v 1}))
-      (is (some? @game))
-      (is (false? (:ready @game)))
-      (let [player (nth (:players @game) 1)]
-        (is (= 0 (:turns player)))
-        (is (= 1 (:remaining-ships player)) "player 1 should have 1 ship")
-        (is (= 1 (nth (-> player :grid :data) 6))))
-
-      (reset! game (g/place-ship @game 1 {:x 4 :y 4} {:area {:w 1 :h 1} :v 1}))
-      (is (some? @game))
-      (is (true? (:ready @game)) "the game is ready to play")
-      (let [player (nth (:players @game) 1)]
-        (is (= 0 (:turns player)))
-        (is (= 2 (:remaining-ships player)) "player 1 should have 2 ships")
-        (is (= 1 (nth (-> player :grid :data) 24)))))
+        ;;player 1
+        (reset! game (g/place-ship @game 1 {:x 1 :y 1} {:area {:w 1 :h 1} :v 1}))
+        (is (some? @game))
+        (is (false? (:ready @game)))
+        (let [player (nth (:players @game) 1)]
+          (is (= 0 (:turns player)))
+          (is (= 1 (:remaining-ships player)) "player 1 should have 1 ship")
+          (is (= 1 (nth (-> player :grid :data) 6))))
+        
+        (reset! game (g/place-ship @game 1 {:x 4 :y 4} {:area {:w 1 :h 1} :v 1}))
+        (is (some? @game))
+        (is (true? (:ready @game)) "the game is ready to play, all ships placed")
+        (let [player (nth (:players @game) 1)]
+          (is (= 0 (:turns player)))
+          (is (= 2 (:remaining-ships player)) "player 1 should have 2 ships")
+          (is (= 1 (nth (-> player :grid :data) 24))))))
+        
+    (deftest place-ships-different-of-different-size
+      (let [game (atom (g/create-game [{:name "ernie"} {:name "T2000"}] 2 {:w 5 :h 5}))]))
     
     (deftest place-too-many-ships)
-
+        
     (deftest place-ships-when-game-ready)
-    
-    (deftest place-ships-outside-of-grid-bounds)
-  
-    (deftest place-ships-overlap-other-ships)))
+          
+    (deftest place-ships-outside-of-grid-bounds
+      (let [game (g/create-game [{:name "ernie"} {:name "Sara"}] 2 {:w 10 :h 10})]
+        (is (thrown? (g/place-ship game 0 {:x 10 :y 10} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
+        (is (thrown? (g/place-ship game 0 {:x 9 :y 9} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
+        (is (thrown? (g/place-ship game 0 {:x 9 :y 0} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
+        (is (thrown? (g/place-ship game 0 {:x 0 :y 0} {:area {:w 100 :h 100} :v 9})) "ship is too huge!")))
+            
+    (deftest place-ships-overlap-other-ships))
 
 (testing "play some rounds"
   (let [game (atom (g/create-game [{:name "ernie"} {:name "idiot"}] 2 {:w 10 :h 10}))]
