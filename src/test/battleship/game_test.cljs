@@ -11,7 +11,6 @@
         game (g/create-game player-names no-of-ships grid-dims)]
 
     (deftest create-game
-      (is (= grid-dims (:grid-dimensions game)) "should be the same as what you passed in")
       (is (false? (:ready game)) "game is not ready to start as no ships deployed")
       (is (= 0 (:turn game)) "first player starts")
       (is (= 2 (:player-count game)))
@@ -22,9 +21,11 @@
                     (is (= 0 (:hits %)) "player has not started yet")
                     (is (= 0 (:misses %)) "player has not started yet")
                     (is (= 0 (:remaining-ships %)) "player has not deployed any ships")
-                    (is (= 100 (count (:grid %))) "the grid should be the required dimensions of the game")
-                    (is (vector? (:grid %)) "required for nth/index access")
-                    (is (apply = 0 (:grid %)) "the grid should be initialised to 0")) players)
+                    (is (= (:w grid-dims) (-> % :grid :w)) "should be the same width as the passed grid dims for the game")
+                    (is (= (:h grid-dims) (-> % :grid :h)) "should be the same height as the passed grid dims for the game")
+                    (is (= 100 (count (-> % :grid :data))) "the grid should be the required dimensions of the game")
+                    (is (vector? (-> % :grid :data)) "required for nth/index access")
+                    (is (apply = 0 (-> % :grid :data)) "the grid should be initialised to 0")) players)
         (is (= "ernie" (:name (nth players 0))))
         (is (= :human (:type (nth players 0))))
         (is (= "computer" (:name (nth players 1))))
@@ -36,42 +37,39 @@
     (deftest place-ships
 
       ;; player 0
-      (reset! game (g/place-ship @game 0 {:x 0 :y 0} {:type 1 :w 1 :h 1}))
+      (reset! game (g/place-ship @game 0 {:x 0 :y 0} {:area {:w 1 :h 1} :v 2}))
       (is (some? @game))
       (is (false? (:ready @game)))
       (let [player (nth (:players @game) 0)]
         (is (= 0 (:turns player)))
-        (is (= 1 (:remaining-ships player)))
-        (is (= 1 (nth (:grid player) 0))))
+        (is (= 1 (:remaining-ships player)) "player 0 should have 1 ship")
+        (is (= 2 (nth (-> player :grid :data) 0))))
       
-      (reset! game (g/place-ship @game 0 {:x 2 :y 4} {:type 2 :w 1 :h 1}))
+      (reset! game (g/place-ship @game 0 {:x 2 :y 4} {:area {:w 1 :h 1} :v 2}))
       (is (some? @game))
       (is (false? (:ready @game)))
       (let [player (nth (:players @game) 0)]
         (is (= 0 (:turns player)))
-        (is (= 2 (:remaining-ships player)))
-        (is (= 2 (nth (:grid player) 22))))
+        (is (= 2 (:remaining-ships player)) "player 0 should have 2 ships")
+        (is (= 2 (nth (-> player :grid :data) 22))))
 
       ;;player 1
-      (reset! game (g/place-ship @game 1 {:x 1 :y 1} {:type 1 :w 1 :h 1}))
+      (reset! game (g/place-ship @game 1 {:x 1 :y 1} {:area {:w 1 :h 1} :v 1}))
       (is (some? @game))
       (is (false? (:ready @game)))
       (let [player (nth (:players @game) 1)]
         (is (= 0 (:turns player)))
-        (is (= 2 (:remaining-ships player)))
-        (is (= 1 (nth (:grid player) 6))))
+        (is (= 1 (:remaining-ships player)) "player 1 should have 1 ship")
+        (is (= 1 (nth (-> player :grid :data) 6))))
 
-      (reset! game (g/place-ship @game 1 {:x 4 :y 4} {:type 2 :w 1 :h 1}))
+      (reset! game (g/place-ship @game 1 {:x 4 :y 4} {:area {:w 1 :h 1} :v 1}))
       (is (some? @game))
-      (is (false? (:ready @game)))
+      (is (true? (:ready @game)) "the game is ready to play")
       (let [player (nth (:players @game) 1)]
         (is (= 0 (:turns player)))
-        (is (= 2 (:remaining-ships player)))
-        (is (= 2 (nth (:grid player) 24))))
-
-      ;; game can start
-      (is (true? (:ready @game))))
-     
+        (is (= 2 (:remaining-ships player)) "player 1 should have 2 ships")
+        (is (= 1 (nth (-> player :grid :data) 24)))))
+    
     (deftest place-too-many-ships)
 
     (deftest place-ships-when-game-ready)
@@ -93,6 +91,10 @@
 
 (comment
 
+  (def d {:data {:w 23}})
+
+  (-> d :data :w)
+  
   (are [a b] (= a b)
     0 0
     1 0)
