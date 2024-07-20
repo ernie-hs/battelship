@@ -28,9 +28,12 @@
         (is (= :gabor (:type (nth players 1)))))))
 
   (deftest create-game-with-less-than-two-players
-    (is (thrown? js/Error (g/create-game nil -1 nil)))
+    (is (thrown? js/Error (g/create-game nil -1 nil)) "nil players!")
     (is (thrown? js/Error (g/create-game [] 5 {:w 10 :h 10})) "no players!")
-    (is (thrown? js/Error (g/create-game [{:name "only me!"}] 5 {:w 10 :h 10})) "must have at least two players?!")))
+    (is (thrown? js/Error (g/create-game [{:name "only me!"}] 5 {:w 10 :h 10})) "must have at least two players?!"))
+
+  (deftest create-game-with-invalid-players
+    (is (thrown? js/Error (g/create-game [{:name "ernie" :type :human} {:name "aardvark" :type :aardvark}] 10 {:w 100 :h 100})))))
 
 (testing "player ship placement"
 
@@ -68,31 +71,37 @@
           (is (= 1 (nth (-> player :grid :data) 24))))))
         
     (deftest place-ships-different-of-different-size
-      (let [game (atom (g/create-game [{:name "ernie"} {:name "T2000"}] 2 {:w 5 :h 5}))]))
+      (let [game (atom (g/create-game [{:name "ernie" :type :human} {:name "T2000" :type :gabor}] 2 {:w 5 :h 5}))]
+        (is (false? true) "TBD")))
     
-    (deftest place-too-many-ships)
+    (deftest place-too-many-ships
+      (is (false? true) "TBD"))
         
-    (deftest place-ships-when-game-ready)
-          
+    (deftest place-ships-when-game-ready
+      (is (false? true) "TBD"))
+
     (deftest place-ships-outside-of-grid-bounds
-      (let [game (g/create-game [{:name "ernie"} {:name "Sara"}] 2 {:w 10 :h 10})]
+      (let [game (g/create-game [{:name "ernie" :type :gabor} {:name "Sara" :type :gabor}] 2 {:w 10 :h 10})]
         (is (thrown? js/Error (g/place-ship game 0 {:x 10 :y 10} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
         (is (thrown? js/Error (g/place-ship game 0 {:x 9 :y 9} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
         (is (thrown? js/Error (g/place-ship game 0 {:x 9 :y 0} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
         (is (thrown? js/Error (g/place-ship game 0 {:x 0 :y 0} {:area {:w 100 :h 100} :v 9})) "ship is too huge!")
         (is (thrown? js/Error (g/place-ship game 0 {:x 0 :y 0} {:area {:w 0 :h 0} :v 6})) "ship has no size!")))
             
-    (deftest place-ships-overlap-other-ships))
+    (deftest place-ships-overlap-other-ships
+      (is (false? true) "TBD")))
 
 (testing "play some rounds"
-  (let [game (atom (g/create-game [{:name "ernie"} {:name "idiot"}] 2 {:w 10 :h 10}))]
+  (let [game (atom (g/create-game [{:name "ernie" :type :gabor} {:name "idiot" :type :gabor}] 2 {:w 10 :h 10}))]
 
-    (deftest play-game-rounds)))
+    (deftest play-game-rounds
+      (is (false? true) "TBD"))))
 
 (testing "end of game, a player wins"
-  (let [game (g/create-game [{:name "ernie"} {:name "T2"}] 2 {:w 10 :h 10})]
+  (let [game (g/create-game [{:name "ernie" :type :computer} {:name "T2" :type :computer}] 2 {:w 10 :h 10})]
 
-    (deftest end-game)))
+    (deftest end-game
+      (is (false? true) "TBD"))))
 
 (comment
 

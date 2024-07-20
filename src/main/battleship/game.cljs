@@ -20,9 +20,12 @@
 
 ;; grid spec
 
+(defn correct-data-size-for-grid? [grid]
+  (= (* (-> grid :rect :w) (-> grid :rect :h)) (count (:data grid))))
+
 (s/def :bs.grid/data vector?)
 (s/def :bs/grid
-  (s/and #(= (* (-> % :rect :w) (-> % :rect :h)) (count (:data %)))
+  (s/and correct-data-size-for-grid?
          (s/keys :req-un [:bs/rect :bs.grid/data])))
 
 ;; player spec
@@ -43,10 +46,12 @@
 
 ;; game spec
 
+(defn non-empty-vector? [v] (and (vector? v) (> (count v) 1)))
+                                  
 (s/def :bs.game/ready boolean?)
 (s/def :bs.game/turn int-ge-zero?)
 (s/def :bs.game/ships int-gt-zero?)
-(s/def :bs.game/players (s/and vector? #(> (count %) 1)))
+(s/def :bs.game/players (s/and non-empty-vector? (s/coll-of :bs/player)))
 (s/def :bs/game
   (s/keys :req-un [:bs.game/ready :bs.game/turn :bs.game/players]))
 
@@ -82,8 +87,7 @@
 (defn create-game
   "create a new game"
   [players starting-ship-count grid-dimensions]
-  {:pre [(s/valid? :bs.game/players players)
-         (s/valid? int-gt-zero? starting-ship-count)
+  {:pre [(s/valid? int-gt-zero? starting-ship-count)
          (s/valid? :bs/rect grid-dimensions)]
    :post [(s/valid? :bs/game %)]}
   (let [w (:w grid-dimensions)
