@@ -13,7 +13,6 @@
     (deftest create-game
       (is (false? (:ready game)) "game is not ready to start as no ships deployed")
       (is (= 0 (:turn game)) "first player starts")
-      (is (= 2 (:player-count game)))
       (is (= 2 (count (:players game))))
       (let [players (:players game)]
         (is (vector? players) "required for nth/index access")
@@ -21,8 +20,8 @@
                     (is (= 0 (:hits %)) "player has not started yet")
                     (is (= 0 (:misses %)) "player has not started yet")
                     (is (= 0 (:remaining-ships %)) "player has not deployed any ships")
-                    (is (= (:w grid-dims) (-> % :grid :w)) "should be the same width as the passed grid dims for the game")
-                    (is (= (:h grid-dims) (-> % :grid :h)) "should be the same height as the passed grid dims for the game")
+                    (is (= (:w grid-dims) (-> % :grid :rect :w)) "should be the same width as the passed grid dims for the game")
+                    (is (= (:h grid-dims) (-> % :grid :rect :h)) "should be the same height as the passed grid dims for the game")
                     (is (= 100 (count (-> % :grid :data))) "the grid should be the required dimensions of the game")
                     (is (vector? (-> % :grid :data)) "required for nth/index access")
                     (is (apply = 0 (-> % :grid :data)) "the grid should be initialised to 0")) players)
@@ -32,6 +31,7 @@
         (is (= :computer (:type (nth players 1)))))))
 
   (deftest create-game-with-less-than-two-players
+    (is (thrown? js/Error (g/create-game nil -1 nil)))
     (is (thrown? js/Error (g/create-game [] 5 {:w 10 :h 10})) "no players!")
     (is (thrown? js/Error (g/create-game [{:name "only me!"}] 5 {:w 10 :h 10})) "must have at least two players?!")))
 

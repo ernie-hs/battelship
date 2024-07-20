@@ -1,13 +1,59 @@
-(ns battleship.game)
+(ns battleship.game
+  (:require [clojure.spec.alpha :as s]))
 
-;; spec... spec anyone?
+(defn int-gt-zero? [x] (and int? (> x 0)))
+(defn int-ge-zero? [x] (and int? (>= x 0)))
+
+;; rect spec
+
+(s/def :bs.rect/w int-gt-zero?)
+(s/def :bs.rect/h int-gt-zero?)
+
+;; grid spec
+
+(s/def :bs.grid/data vector?)
+(s/def :bs/grid
+  (s/keys :req-un [:bs/rect :bs.grid/data]))
+
+;; player spec
+
+(s/def :bs.player/name string?)
+(s/def :bs.player/type #{:human :computer :gabor})
+(s/def :bs.grid/hits int-ge-zero?)
+(s/def :bs.grid/misses int-ge-zero?)
+(s/def :bs.grid/remaining-ships int-ge-zero?)
+(s/def :bs/player
+  (s/keys :req-un [:bs/name :bs.player/type :bs/turns :bs/hits :bs/misses :bs/remaining-ships :bs/grid]))
+
+;; ship spec
+
+(s/def :bs.ship/v int?)
+(s/def :bs/ship
+  (s/keys :req-un [:bs/rect :bs/v]))
+
+;; game spec
+(s/def :bs.game/ship-count (s/and int? #(> % 0)))
+(s/def :bs.game/ready boolean?)
+(s/def :bs.game/turn int-ge-zero?)
+(s/def :bs.game/players (s/and vector? #(> (count %) 1)))
+(s/def :bs/game
+  (s/keys :req-un [:bs.game/ship-count :bs.game/ready :bs.game/turn :bs.game/players]))
+
+;; helper fn's
 
 (defn- create-grid
   "create an empty grid, w x h and initialised with v"
   [w h v]
-  (vec (replicate (* w h) v)))
+  {:pre [(s/valid? :bs.rect/w w)
+         (s/valid? :bs.rect/h h)]
+   :post [(s/valid? :bs/grid %)]}
+  {:rect {:w w :h h} :data (vec (replicate (* w h) v))})
 
 (defn- calc-idx-from-xy [grid x y]
+  {:pre [(s/valid? :bs/grid grid)
+         (s/valid? int-ge-zero? x)
+         (s/valid? int-ge-zero? y)]
+   :post [(s/valid? int-ge-zero? %)]}
   (+ x (* (:w grid) y)))
 
 (defn- set-grid
@@ -20,17 +66,17 @@
 (defn create-game
   "create a new game"
   [players ship-count grid-dimensions]
-  (when (< (count players) 2) (throw (ex-info "must have at least 2 players" {:players players})))
+  {:pre [(s/valid? :bs.game/players players)]
+   :post [(s/valid? :bs/game %)]}
   (let [w (:w grid-dimensions)
         h (:h grid-dimensions)]
-    {:player-count (count players)
-     :ship-count ship-count
+    {:ship-count ship-count
      :ready false
      :turn 0
      :players (mapv (fn [p]
                       (assoc p
                              :turns 0
-                             :grid {:w w :h h :data (create-grid w h 0)}
+                             :grid (create-grid w h 0)
                              :hits 0
                              :misses 0
                              :remaining-ships 0)) players)}))
@@ -52,6 +98,21 @@
 
 (comment
 
+  (s/explain :bs/grid
+             {:w 10
+              :h -1
+              :data []})
+
+  (s/explain :bs/player
+             {:name -1
+              :type :gabor
+              :hits 0
+              :misses 0
+              :remaining-ships 0
+              :grid {:w 1
+                     :h 1
+                     :data []}})
+  
   (create-game [] 2 {:w 1 :h 1})
   
   (apply = 2 [2 2 2 2])
@@ -74,5 +135,5 @@
 
   (place-ship game 0 {:x 1 :y 1} {:area {:w 1 :h 2} :v 3})
 
-  
+
   *)
