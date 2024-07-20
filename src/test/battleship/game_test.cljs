@@ -32,7 +32,8 @@
         (is (= :computer (:type (nth players 1)))))))
 
   (deftest create-game-with-less-than-two-players
-    (is (thrown? (g/create-game [{:name "only me!"}] 5 {:w 10 :h 10})) "must have at least two players?!")))
+    (is (thrown? js/Error (g/create-game [] 5 {:w 10 :h 10})) "no players!")
+    (is (thrown? js/Error (g/create-game [{:name "only me!"}] 5 {:w 10 :h 10})) "must have at least two players?!")))
 
 (testing "player ship placement"
 
@@ -82,10 +83,11 @@
           
     (deftest place-ships-outside-of-grid-bounds
       (let [game (g/create-game [{:name "ernie"} {:name "Sara"}] 2 {:w 10 :h 10})]
-        (is (thrown? (g/place-ship game 0 {:x 10 :y 10} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
-        (is (thrown? (g/place-ship game 0 {:x 9 :y 9} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
-        (is (thrown? (g/place-ship game 0 {:x 9 :y 0} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
-        (is (thrown? (g/place-ship game 0 {:x 0 :y 0} {:area {:w 100 :h 100} :v 9})) "ship is too huge!")))
+        (is (thrown? js/Error (g/place-ship game 0 {:x 10 :y 10} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
+        (is (thrown? js/Error (g/place-ship game 0 {:x 9 :y 9} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
+        (is (thrown? js/Error (g/place-ship game 0 {:x 9 :y 0} {:area {:w 3 :h 1} :v 5})) "ship outside of grid bounds")
+        (is (thrown? js/Error (g/place-ship game 0 {:x 0 :y 0} {:area {:w 100 :h 100} :v 9})) "ship is too huge!")
+        (is (thrown? js/Error (g/place-ship game 0 {:x 0 :y 0} {:area {:w 0 :h 0} :v 6})) "ship has no size!")))
             
     (deftest place-ships-overlap-other-ships))
 
@@ -99,9 +101,10 @@
 
     (deftest end-game)))
 
-
 (comment
 
+  (is (thrown? Exception (throw (ex-info "ernie" {:x 1}))))
+  
   (def d {:data {:w 23}})
 
   (-> d :data :w)

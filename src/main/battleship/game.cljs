@@ -1,5 +1,7 @@
 (ns battleship.game)
 
+;; spec... spec anyone?
+
 (defn- create-grid
   "create an empty grid, w x h and initialised with v"
   [w h v]
@@ -18,6 +20,7 @@
 (defn create-game
   "create a new game"
   [players ship-count grid-dimensions]
+  (when (< (count players) 2) (throw (ex-info "must have at least 2 players" {:players players})))
   (let [w (:w grid-dimensions)
         h (:h grid-dimensions)]
     {:player-count (count players)
@@ -49,6 +52,8 @@
 
 (comment
 
+  (create-game [] 2 {:w 1 :h 1})
+  
   (apply = 2 [2 2 2 2])
   
   (def game (create-game [{:name "ernie" :type :human} {:name "computer" :type :computer}] 3 {:w 3 :h 3}))
@@ -68,7 +73,6 @@
   (assoc game :players (:players game))
 
   (place-ship game 0 {:x 1 :y 1} {:area {:w 1 :h 2} :v 3})
-
 
   
   *)
