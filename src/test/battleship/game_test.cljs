@@ -2,10 +2,8 @@
   (:require [cljs.test :refer (testing deftest is)]
             [battleship.game :as g]))
 
-;; spec anyone?
-
 (testing "game creation"
-  (let [player-names [{:name "ernie" :type :human} {:name "computer" :type :computer}]
+  (let [player-names [{:name "ernie" :type :human} {:name "computer" :type :gabor}]
         grid-dims {:w 10 :h 10}
         no-of-ships 5
         game (g/create-game player-names no-of-ships grid-dims)]
@@ -16,8 +14,7 @@
       (is (= 2 (count (:players game))))
       (let [players (:players game)]
         (is (vector? players) "required for nth/index access")
-        (apply #(do (is (= 0 (:turns %)) "player has not started yet")
-                    (is (= 0 (:hits %)) "player has not started yet")
+        (apply #(do (is (= 0 (:hits %)) "player has not started yet")
                     (is (= 0 (:misses %)) "player has not started yet")
                     (is (= 0 (:remaining-ships %)) "player has not deployed any ships")
                     (is (= (:w grid-dims) (-> % :grid :rect :w)) "should be the same width as the passed grid dims for the game")
@@ -28,7 +25,7 @@
         (is (= "ernie" (:name (nth players 0))))
         (is (= :human (:type (nth players 0))))
         (is (= "computer" (:name (nth players 1))))
-        (is (= :computer (:type (nth players 1)))))))
+        (is (= :gabor (:type (nth players 1)))))))
 
   (deftest create-game-with-less-than-two-players
     (is (thrown? js/Error (g/create-game nil -1 nil)))
@@ -38,39 +35,35 @@
 (testing "player ship placement"
 
     (deftest place-ships
-      (let [game (atom (g/create-game [{:name "ernie"} {:name "T2000"}] 2 {:w 5 :h 5}))]
+      (let [game (atom (g/create-game [{:name "ernie" :type :human} {:name "T2000" :type :computer}] 2 {:w 5 :h 5}))]
 
         ;; player 0
-        (reset! game (g/place-ship @game 0 {:x 0 :y 0} {:area {:w 1 :h 1} :v 2}))
+        (reset! game (g/place-ship @game 0 {:x 0 :y 0} {:rect {:w 1 :h 1} :v 2}))
         (is (some? @game))
         (is (false? (:ready @game)))
         (let [player (nth (:players @game) 0)]
-          (is (= 0 (:turns player)))
           (is (= 1 (:remaining-ships player)) "player 0 should have 1 ship")
           (is (= 2 (nth (-> player :grid :data) 0))))
           
-        (reset! game (g/place-ship @game 0 {:x 2 :y 4} {:area {:w 1 :h 1} :v 2}))
+        (reset! game (g/place-ship @game 0 {:x 2 :y 4} {:rect {:w 1 :h 1} :v 2}))
         (is (some? @game))
         (is (false? (:ready @game)))
         (let [player (nth (:players @game) 0)]
-          (is (= 0 (:turns player)))
           (is (= 2 (:remaining-ships player)) "player 0 should have 2 ships")
           (is (= 2 (nth (-> player :grid :data) 22))))
 
         ;;player 1
-        (reset! game (g/place-ship @game 1 {:x 1 :y 1} {:area {:w 1 :h 1} :v 1}))
+        (reset! game (g/place-ship @game 1 {:x 1 :y 1} {:rect {:w 1 :h 1} :v 1}))
         (is (some? @game))
         (is (false? (:ready @game)))
         (let [player (nth (:players @game) 1)]
-          (is (= 0 (:turns player)))
           (is (= 1 (:remaining-ships player)) "player 1 should have 1 ship")
           (is (= 1 (nth (-> player :grid :data) 6))))
         
-        (reset! game (g/place-ship @game 1 {:x 4 :y 4} {:area {:w 1 :h 1} :v 1}))
+        (reset! game (g/place-ship @game 1 {:x 4 :y 4} {:rect {:w 1 :h 1} :v 1}))
         (is (some? @game))
         (is (true? (:ready @game)) "the game is ready to play, all ships placed")
         (let [player (nth (:players @game) 1)]
-          (is (= 0 (:turns player)))
           (is (= 2 (:remaining-ships player)) "player 1 should have 2 ships")
           (is (= 1 (nth (-> player :grid :data) 24))))))
         
