@@ -1,6 +1,8 @@
 (ns battleship.core
   (:require [three :as t]
             ["three/addons/controls/ArcballControls.js" :refer [ArcballControls]]
+            ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
+            ["three/addons/geometries/TextGeometry.js" :refer [TextGeometry]]
             [battleship.utils :as u]))
 
 (defn get-window-dims
@@ -19,6 +21,25 @@
       (.updateProjectionMatrix camera)
       (.update control))))
 
+(defn create-text-mesh [font text]
+  (def geometry (TextGeometry. text (js-obj "font" font
+                                            "size" 7
+                                            "depth" 2
+                                            "curveSegments" 4
+                                            "bevelThickness" 0.1
+                                            "bevelSize" 1.5
+                                            "bevelEnabled" false)))
+  (def materials [(t/MeshPhongMaterial. (js-obj "color" 0xff0000
+                                                "flatShading" true))
+                  (t/MeshPhongMaterial. (js-obj "color" 0x00ff00))])
+  (def mesh (t/Mesh. geometry materials))
+  (.computeBoundingBox geometry)
+  (js/console.log (.-boundingBox geometry))
+  (u/pos mesh 0 0 0)
+  (u/rot mesh 0 0 0)
+  mesh)
+
+
 ;; globals
 
 (def canvas (.querySelector js/document "#grid"))
@@ -27,6 +48,7 @@
 (def camera (t/PerspectiveCamera. 45 1.3 0.1 1000))
 (def scene (t/Scene.))
 (def control (ArcballControls. camera canvas scene))
+(def *assets (atom {}))
 
 (.set (.-position camera) 0 5 10)
 (.lookAt camera 0 0 0)
@@ -43,6 +65,9 @@
 (.set (.-position light) 10 10 5)
 (.add scene light)
 
+;;(def dir-light (t/DirectionalLight. 0xffffff 1))
+;;(.add scene dir-light)
+
 (def plane-geometry (t/PlaneGeometry. 10 10))
 (.rotateX plane-geometry (/ js/Math.PI -2))
 (def plane-material (t/MeshPhysicalMaterial. (js-obj "color" "cornflowerblue")))
@@ -50,33 +75,24 @@
 (set! (.-receiveShadow plane) true)
 (.add scene plane)
 
+(def font-loader (FontLoader.))
+(.load font-loader "fonts/helvetiker_bold.typeface.json"
+       (fn [font]
+         (let [mesh (create-text-mesh font "ernie")]
+           (.add scene mesh)))
+       (fn [xhr] (js/console.log xhr " " (* (/ (.-loaded xhr) (.-total xhr)) 100) " % loaded"))
+       (fn [err] (js/console.log "you suck!")))
+         
 (def grid (t/GridHelper. 10 10))
 (.set (.-position grid) 0 0.01 0)
 (.add scene grid)
 
-(def geometry (t/BoxGeometry. 1 1 1))
-(def material (t/MeshPhysicalMaterial. (js-obj "color" "orange")))
-(def box (t/Mesh. geometry material))
-(set! (.-castShadow box) true)
-(set! (.-receiveShadow box) true)
-(.set (.-position box) 2 2 0)
-
-(def group (t/Group.))
-(.add group box)
-(.add scene group)
-
 (defn animation
   "animation loop used by renderer, do and draw stuff here"
   []
-  (let [y (.-y (.-rotation box))
-        z (.-z (.-rotation box))
-        y-group (.-y (.-rotation group))]
-    (set! (.-y (.-rotation box)) (+ 0.01 y))
-    (set! (.-z (.-rotation box)) (+ 0.01 z))
-    (set! (.-y (.-rotation group)) (+ 0.01 y-group))
-    (.render renderer scene camera)))
+  (.render renderer scene camera))
 
-;; shadow stuff
+;; shadow-cljs stuff
 
 (defn init []
   (.setAnimationLoop renderer animation)
