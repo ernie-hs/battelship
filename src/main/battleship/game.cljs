@@ -81,7 +81,6 @@
    :post [(s/valid? :bs/grid %)]}
   (assoc grid :data (assoc (:data grid) (calc-idx-from-pos grid pos) v)))
 
-
 ;; game stuff
 
 (defn create-game
@@ -121,6 +120,10 @@
     (assoc updated-game
            :ready (apply = ships (map :remaining-ships (:players updated-game))))))
 
+(defn fire
+  "fire!"
+  [game player-idx target-pos]
+  game)
 
 (comment
 

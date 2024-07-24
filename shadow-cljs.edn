@@ -7,14 +7,19 @@
  ;; set an nrepl port for connection to a REPL.
  :nrepl        {:port 8777}
 
- :dev-http {8021 "out/test"}
- 
  :builds {:test {:target :node-test
                  :output-to "out/node-tests.js"
                  :autorun true}
           
           :browser-test {:target :browser-test
-                         :test-dir "out/test"}
+                         :test-dir "out/test"
+                         :build-hooks [(shadow.html/copy-file "public/fonts/gentilis_bold.typeface.json"
+                                                              "out/test/fonts/gentilis_bold.typeface.json")
+                                       (shadow.html/copy-file "public/fonts/gentilis_regular.typeface.json"
+                                                              "out/test/fonts/gentilis_regular.typeface.json")]
+                         :devtools {:http-root "out/test"
+                                    :http-port 8021}}
+                                     
 
           :app {:target :browser
                 :output-dir "public/js/compiled"
