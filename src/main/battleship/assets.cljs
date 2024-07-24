@@ -1,14 +1,12 @@
 (ns battleship.assets
-  (:require [clojure.spec.alpha :as s]
-            ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
-            ["three/addons/loaders/GLTFLoader.js" :refer [GLTFLoader]]))
+  (:require [clojure.spec.alpha :as s]))
 
 ;; asset spec
 
 (s/def :bs.asset/type #{:font :model :image})
 (s/def :bs.asset/name keyword?)
 (s/def :bs.asset/src string?)
-(s/def :bs.asset/obj object?)
+(s/def :bs.asset/obj some?)
 (s/def :bs/asset
   (s/keys :req-un [:bs.asset/type :bs.asset/src]
           :opt-un [:bs.asset/obj]))
@@ -16,7 +14,7 @@
 (s/def :bs.assets/items (s/and not-empty (s/map-of :bs.asset/name :bs/asset)))
 (s/def :bs/assets
   (s/keys :req-un [:bs.assets/ready :bs.assets/items]))
-(s/def :bs.assets/loaders (s/and not-empty (s/map-of :bs.asset/type object?)))
+(s/def :bs.assets/loaders (s/and not-empty (s/map-of :bs.asset/type some?)))
 
 ;; loader TODO sort this out
 
@@ -36,6 +34,8 @@
 
 (comment
 
+  (nil? 1)
+  
   (def asset {:type :cheese :src "cheddar.js"})
 
   (let [[type src] (vals asset)]
@@ -45,9 +45,8 @@
               :my-font2 {:type :font :src "fonts/gentilis_regular.typeface.json"}
               :my-model {:type :model :src "models/ship.glb"}})
 
-  (def *r (load-assets items {:font (FontLoader.) :model (GLTFLoader.)}))
 
-  (s/valid? :bs.assets/loader {:font (fn [x y])})
+  (s/valid? :bs.assets/loaders {:font (fn [x y])})
   
   @*r
 

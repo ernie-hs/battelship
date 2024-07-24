@@ -2,8 +2,10 @@
   (:require [three :as t]
             ["three/addons/controls/ArcballControls.js" :refer [ArcballControls]]
             ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
+            ["three/addons/loaders/GLTFLoader.js" :refer [GLTFLoader]]
             ["three/addons/geometries/TextGeometry.js" :refer [TextGeometry]]
-            [battleship.utils :as u]))
+            [battleship.utils :as u]
+            [battleship.assets :as a]))
 
 (defn get-window-dims
  "get the dimensions of js/window"
@@ -27,11 +29,10 @@
 
 ;; globals
 (set! (.-enabled t/Cache) true)
-
-(def *assets (atom {:ready false
-                    :fonts { :droid {:src "fonts/droid/droid_sans_mono_regular.typeface.json"}}
-                    :models { :frigate {:src "models/ship.glb"}}}))
-
+(def *assets (a/load-assets {:my-font {:type :font :src "fonts/droid/droid_sans_mono_regular.typeface.json"}
+                             :my-ship {:type :model :src "models/ship.glb"}}
+                            {:font (FontLoader.)
+                             :model (GLTFLoader.)}))
 (def canvas (.querySelector js/document "#grid"))
 (def renderer (t/WebGLRenderer. (js-obj "canvas" canvas "antialias" true)))
 (def camera (t/PerspectiveCamera. 45 1.3 0.1 2000))
@@ -62,15 +63,6 @@
 (set! (.-receiveShadow plane) true)
 (.add scene plane)
 
-(def font-loader (FontLoader.))
-(.load font-loader "fonts/droid/droid_sans_mono_regular.typeface.json"
-       (fn [font]
-         (let [mesh (create-text-mesh font "BATTLESHIP\u06e9" "yellow")]
-           (.add scene mesh)))
-       (fn [xhr] (js/console.log "font - " (.-loaded xhr) " % loaded"))
-       (fn [err] (js/console.log "you suck!")))
-
-
 (def grid (t/GridHelper. 10 10))
 (.set (.-position grid) 0 0.01 0)
 (.add scene grid)
@@ -92,3 +84,12 @@
 
 (defn stop []
   (js/console.log "stop"))
+
+
+(comment
+
+  (object? (js-obj "ernie" 1))
+  (object? (FontLoader.))
+
+
+  *)
