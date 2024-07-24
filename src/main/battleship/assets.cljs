@@ -1,6 +1,7 @@
 (ns battleship.assets
   (:require [clojure.spec.alpha :as s]
-            ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]))
+            ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
+            ["three/addons/loaders/GLTFLoader.js" :refer [GLTFLoader]]))
 
 ;; asset spec
 
@@ -12,45 +13,49 @@
   (s/keys :req-un [:bs.asset/type :bs.asset/src]
           :opt-un [:bs.asset/obj]))
 (s/def :bs.assets/ready boolean?)
-(s/def :bs.assets/items (s/map-of :bs.asset/name :bs/asset))
+(s/def :bs.assets/items (s/and not-empty (s/map-of :bs.asset/name :bs/asset)))
 (s/def :bs/assets
   (s/keys :req-un [:bs.assets/ready :bs.assets/items]))
+(s/def :bs.assets/loaders (s/and not-empty (s/map-of :bs.asset/type object?)))
 
-;; assets loader
+;; loader TODO sort this out
 
 (defn load-assets
-  [items]
-  {:pre [(s/valid? :bs.assets/items items)]
+  [items loaders]
+  {:pre [(s/valid? :bs.assets/items items)
+         (s/valid? :bs.assets/loaders loaders)]
    :post [(s/valid? :bs/assets @%)]}
-  (let [*assets (atom {:ready false :items items})
-        font-loader (FontLoader.)]
-    (doseq [k (keys (:items @*assets))]
-      (.load font-loader (-> @*assets :items k :src)
-             (fn [font]
-               (js/console.log "loaded " k)
-               (swap! *assets assoc-in [:items k :obj] font))))
+  (let [*assets (atom {:ready false :items items})]
+    (doseq [[name asset] (:items @*assets)]
+      (.load ((:type asset) loaders) (:src asset)
+             (fn [loaded]
+               (swap! *assets assoc-in [:items name :obj] loaded)
+               (when (= (count (:items @*assets)) (count (filter :obj (vals (:items @*assets)))))
+                 (swap! *assets assoc :ready true)))))
     *assets))
 
 (comment
 
+  (def asset {:type :cheese :src "cheddar.js"})
+
+  (let [[type src] (vals asset)]
+    (js/console.log type " " src))
+  
   (def items {:my-font1 {:type :font :src "fonts/gentilis_bold.typeface.json"}
-              :my-font2 {:type :font :src "fonts/gentilis_regular.typeface.json"}})
+              :my-font2 {:type :font :src "fonts/gentilis_regular.typeface.json"}
+              :my-model {:type :model :src "models/ship.glb"}})
 
+  (def *r (load-assets items {:font (FontLoader.) :model (GLTFLoader.)}))
 
-  (def *r (load-assets items))
-
+  (s/valid? :bs.assets/loader {:font (fn [x y])})
+  
   @*r
 
-  (def *e (atom {:ernie :cheese :stuff {:eggs {:name "ernie"}
-                                        :roger {:name "babs"}}}))
-
-  @*e
-
-  (map :name (vals (:stuff @*e)))
+  (swap! *r assoc :ready true)
   
-  (doseq [k (keys (:stuff @*e))]
-    (swap! *e assoc-in [:stuff k :fart] 2))
-
-  @*e
+  (= (count (:items @*r))
+     (count (filter :obj (vals (:items @*r)))))
+  
+  (filter :obj (vals (:items @*r)))
   
   *)
