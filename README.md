@@ -2,7 +2,7 @@
 
 a crappy version of battleship for the fun of it.
 
-:gabor edition!
+:gabor edition!!!!
 
 **work in progress**
 
