@@ -1,60 +1,102 @@
 (ns battleship.assets
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
+            ["three/addons/loaders/GLTFLoader.js" :refer [GLTFLoader]]))
 
 ;; asset spec
 
-(s/def :bs.asset/type #{:font :model :image})
+(s/def :bs.asset/type #{:font :model})
 (s/def :bs.asset/name keyword?)
 (s/def :bs.asset/src string?)
-(s/def :bs.asset/obj some?)
 (s/def :bs/asset
-  (s/keys :req-un [:bs.asset/type :bs.asset/src]
-          :opt-un [:bs.asset/obj]))
-(s/def :bs.assets/ready boolean?)
-(s/def :bs.assets/items (s/and not-empty (s/map-of :bs.asset/name :bs/asset)))
-(s/def :bs/assets
-  (s/keys :req-un [:bs.assets/ready :bs.assets/items]))
-(s/def :bs.assets/loaders (s/and not-empty (s/map-of :bs.asset/type some?)))
+  (s/keys :req-un [:bs.asset/name :bs.asset/type :bs.asset/src]))
+(s/def :bs/assets (s/coll-of :bs/asset))
 
-;; loader TODO sort this out
+;; load an asset based upon it's type
 
-(defn load-assets
-  [items loaders]
-  {:pre [(s/valid? :bs.assets/items items)
-         (s/valid? :bs.assets/loaders loaders)]
-   :post [(s/valid? :bs/assets @%)]}
-  (let [*assets (atom {:ready false :items items})]
-    (doseq [[name asset] (:items @*assets)]
-      (.load ((:type asset) loaders) (:src asset)
-             (fn [loaded]
-               (swap! *assets assoc-in [:items name :obj] loaded)
-               (when (= (count (:items @*assets)) (count (filter :obj (vals (:items @*assets)))))
-                 (swap! *assets assoc :ready true)))))
+(defn loader-from-type
+  [type]
+  {:pre [(s/valid? :bs.asset/type type)]}
+  (type {:font (FontLoader.)
+         :model (GLTFLoader.)}))
+
+(defn load
+  [asset fn-success fn-monitor fn-error]
+  {:pre [(s/valid? :bs/asset asset)
+         (s/valid? fn? fn-success)
+         (s/valid? fn? fn-monitor)
+         (s/valid? fn? fn-error)]}
+  (js/console.log "loading asset " (str (:name asset)))
+  (.load (loader-from-type (:type asset)) (:src asset) fn-success fn-monitor fn-error))
+
+(defn- success [*assets asset]
+  (fn [obj]
+    (swap! *assets assoc-in [:items (:name asset)] (assoc asset :obj obj))))
+
+(defn- error [*assets asset]
+  (fn [err]
+    (swap! *assets assoc :error true)))
+
+(defn load-all
+  "load a whole bunch of assets async and return an atom of assets"
+  [assets fn-success fn-monitor fn-error]
+  {:pre [(s/valid? :bs/assets assets)
+         (s/valid? fn? fn-success)
+         (s/valid? fn? fn-monitor)
+         (s/valid? fn? fn-error)]}
+  (let [*assets (atom {:ready false :error false :items {}})]
+    (doseq [asset assets]
+      (let [fn-s (success *assets asset)
+            fn-e (error *assets asset)]
+        (load asset fn-s fn-monitor fn-e)))
     *assets))
 
 (comment
 
-  (nil? 1)
-  
-  (def asset {:type :cheese :src "cheddar.js"})
+  (defn fn-success [f] (js/console.log "success"))
+  (defn fn-monitor [x] (js/console.log "monitor" x))
+  (defn fn-error [e] (js/console.log "error"))
 
-  (let [[type src] (vals asset)]
-    (js/console.log type " " src))
+  (fn? fn-success)
   
-  (def items {:my-font1 {:type :font :src "fonts/gentilis_bold.typeface.json"}
-              :my-font2 {:type :font :src "fonts/gentilis_regular.typeface.json"}
-              :my-model {:type :model :src "models/ship.glb"}})
+  (def my-font-1 {:name :my-font-1 :type :font :src "fonts/gentilis_regular.typeface.json"})
+  (def my-font-2 {:name :my-font-2 :type :font :src "fonts/gentilis_bold.typeface.json"})
+  (def my-font-3 {:name :my-font-3 :type :font :src "fonts/optimer_bold.typeface.json"})
+  (def my-model-1 {:name :my-model-1 :type :model :src "models/ship.glb"})
 
+  my-font-1
 
-  (s/valid? :bs.assets/loaders {:font (fn [x y])})
+  (:name my-font-1)
   
-  @*r
+  (loader-from-type (:type my-font-1))
 
-  (swap! *r assoc :ready true)
+  (loader-from-type (:type my-model-1))
   
-  (= (count (:items @*r))
-     (count (filter :obj (vals (:items @*r)))))
+  (load my-font1 fn-success fn-monitor fn-error)
+ 
+  (def my-rubbish {:name :y-rubbish :type :font :src "rubbish"})
+
+  my-rubbish
   
-  (filter :obj (vals (:items @*r)))
+  (def my-assets [my-font-1 my-font-2 my-font-3 my-model-1 my-rubbish])
+
+  my-assets
+
+  (def *assholes (load-all my-assets fn-success fn-monitor fn-error))
+
+  *assholes
+  
+  (def *asses (atom {:ready false :error false :items {}}))
+
+  *asses
+
+  (swap! *asses assoc-in [:items (:name my-font-1)] (assoc my-font-1 :obj (js/Object.)))
+  
+  (def s (success *asses my-font-1))
+
+  *asses
+  
+  (s "ernie")
+  
   
   *)

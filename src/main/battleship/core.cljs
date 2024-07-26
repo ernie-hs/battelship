@@ -4,8 +4,7 @@
             ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
             ["three/addons/loaders/GLTFLoader.js" :refer [GLTFLoader]]
             ["three/addons/geometries/TextGeometry.js" :refer [TextGeometry]]
-            [battleship.utils :as u]
-            [battleship.assets :as a]))
+            [battleship.utils :as u]))
 
 (defn get-window-dims
  "get the dimensions of js/window"
@@ -29,10 +28,6 @@
 
 ;; globals
 (set! (.-enabled t/Cache) true)
-(def *assets (a/load-assets {:my-font {:type :font :src "fonts/droid/droid_sans_mono_regular.typeface.json"}
-                             :my-ship {:type :model :src "models/ship.glb"}}
-                            {:font (FontLoader.)
-                             :model (GLTFLoader.)}))
 (def canvas (.querySelector js/document "#grid"))
 (def renderer (t/WebGLRenderer. (js-obj "canvas" canvas "antialias" true)))
 (def camera (t/PerspectiveCamera. 45 1.3 0.1 2000))
