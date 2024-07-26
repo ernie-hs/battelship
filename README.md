@@ -2,6 +2,8 @@
 
 a crappy version of battleship for the fun of it.
 
+:gabor edition
+
 **work in progress**
 
 ## command line
