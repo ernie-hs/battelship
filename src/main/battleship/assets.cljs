@@ -21,44 +21,35 @@
          :model (GLTFLoader.)}))
 
 (defn load
-  [asset fn-success fn-monitor fn-error]
+  [asset fn-success fn-error]
   {:pre [(s/valid? :bs/asset asset)
          (s/valid? fn? fn-success)
-         (s/valid? fn? fn-monitor)
          (s/valid? fn? fn-error)]}
-  (js/console.log "loading asset " (str (:name asset)))
-  (.load (loader-from-type (:type asset)) (:src asset) fn-success fn-monitor fn-error))
+  (.load (loader-from-type (:type asset)) (:src asset) fn-success nil fn-error))
 
-(defn- success [*assets asset]
+(defn- success
+  [*assets asset]
   (fn [obj]
-    (swap! *assets assoc-in [:items (:name asset)] (assoc asset :obj obj))))
+    (swap! *assets assoc-in [:items (:name asset)] (assoc asset :obj obj))
+    (when (= (:count @*assets) (count (filter :obj (vals (:items @*assets)))))
+      (swap! *assets assoc :ready true))))
 
-(defn- error [*assets asset]
+(defn- error
+  [*assets asset]
   (fn [err]
     (swap! *assets assoc :error true)))
 
 (defn load-all
   "load a whole bunch of assets async and return an atom of assets"
-  [assets fn-success fn-monitor fn-error]
-  {:pre [(s/valid? :bs/assets assets)
-         (s/valid? fn? fn-success)
-         (s/valid? fn? fn-monitor)
-         (s/valid? fn? fn-error)]}
-  (let [*assets (atom {:ready false :error false :items {}})]
+  [assets]
+  {:pre [(s/valid? :bs/assets assets)]}
+  (let [*assets (atom {:ready false :error false :count (count assets) :items {}})]
     (doseq [asset assets]
-      (let [fn-s (success *assets asset)
-            fn-e (error *assets asset)]
-        (load asset fn-s fn-monitor fn-e)))
+      (load asset (success *assets asset) (error *assets asset)))
     *assets))
 
 (comment
 
-  (defn fn-success [f] (js/console.log "success"))
-  (defn fn-monitor [x] (js/console.log "monitor" x))
-  (defn fn-error [e] (js/console.log "error"))
-
-  (fn? fn-success)
-  
   (def my-font-1 {:name :my-font-1 :type :font :src "fonts/gentilis_regular.typeface.json"})
   (def my-font-2 {:name :my-font-2 :type :font :src "fonts/gentilis_bold.typeface.json"})
   (def my-font-3 {:name :my-font-3 :type :font :src "fonts/optimer_bold.typeface.json"})
@@ -78,25 +69,28 @@
 
   my-rubbish
   
-  (def my-assets [my-font-1 my-font-2 my-font-3 my-model-1 my-rubbish])
+  (def my-assets [my-font-1 my-font-2 my-font-3 my-model-1])
 
   my-assets
 
-  (def *assholes (load-all my-assets fn-success fn-monitor fn-error))
-
-  *assholes
+  (:name (first my-assets))
   
-  (def *asses (atom {:ready false :error false :items {}}))
+  (def my-rubbish-assets (conj my-assets my-rubbish))
 
-  *asses
+  my-rubbish-assets
 
-  (swap! *asses assoc-in [:items (:name my-font-1)] (assoc my-font-1 :obj (js/Object.)))
-  
-  (def s (success *asses my-font-1))
+  (def *a (load-all my-assets))
 
-  *asses
+  *a
+
+  (reset! *a update :ready true)
+
+  (assoc @*a :ready true)
   
-  (s "ernie")
+  (count (filter :obj (vals (:items @*a))))
   
+  (def *b (load-all my-rubbish-assets))
+
+  *b
   
   *)

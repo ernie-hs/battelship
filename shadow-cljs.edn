@@ -16,11 +16,12 @@
                          :build-hooks [(shadow.html/copy-file "public/fonts/gentilis_bold.typeface.json"
                                                               "out/test/fonts/gentilis_bold.typeface.json")
                                        (shadow.html/copy-file "public/fonts/gentilis_regular.typeface.json"
-                                                              "out/test/fonts/gentilis_regular.typeface.json")]
+                                                              "out/test/fonts/gentilis_regular.typeface.json")
+                                       (shadow.html/copy-file "public/models/ship.glb"
+                                                              "out/test/models/ship.glb")]
                          :devtools {:http-root "out/test"
                                     :http-port 8021}}
                                      
-
           :app {:target :browser
                 :output-dir "public/js/compiled"
                 :asset-path "/js/compiled"
