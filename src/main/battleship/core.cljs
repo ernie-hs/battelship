@@ -1,90 +1,112 @@
 (ns battleship.core
   (:require [three :as t]
+            [battleship.three :as bst]
+            [battleship.events :as e]
             ["three/addons/controls/ArcballControls.js" :refer [ArcballControls]]
-            ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
-            ["three/addons/loaders/GLTFLoader.js" :refer [GLTFLoader]]
-            ["three/addons/geometries/TextGeometry.js" :refer [TextGeometry]]
-            [battleship.utils :as u]))
+            ["three/addons/geometries/TextGeometry.js" :refer [TextGeometry]]))
 
-(defn get-window-dims
- "get the dimensions of js/window"
-  []
-  (let [width (.-innerWidth js/window)
-        height (.-innerHeight js/window)]
-    {:width width :height height :aspect (/ width height)}))
 
-(defn on-resize-window-builder [renderer camera control]
-  (fn []
-    (let [d (get-window-dims)]
-      (.setPixelRatio renderer (.-devicePixelRatio js/window))
-      (.setSize renderer (:width d) (:height d))
-      (set! (.-aspect camera) (:aspect d))
-      (.updateProjectionMatrix camera)
-      (.update control))))
+(defonce canvas (.querySelector js/document "#grid"))
+(defonce renderer (t/WebGLRenderer. (js-obj "canvas" canvas
+                                            "antialising" true)))
+(defonce camera (t/PerspectiveCamera. 45 1.3 0.1 1000))
+ 
+(e/listen js/window "resize"
+          (fn [_]
+            (let [w (.-innerWidth js/window)
+                  h (.-innerHeight js/window)
+                  a (/ w h)]
+              (.setPixelRatio renderer (.-devicePixelRatio js/window))
+              (.setSize renderer w h)
+              (set! (.-aspect camera) a)
+              (.updateProjectionMatrix camera))))
 
-(defn create-text-mesh [font text color]
-  (t/Mesh. (TextGeometry. text (js-obj "font" font "size" 10 "depth" 1))
-           (t/MeshPhysicalMaterial. (js-obj "color" color))))
+(defn get-text
+  [font text size depth color]
+  (let [geometry (TextGeometry. text (js-obj "font" font "size" size "depth" depth))
+        material (t/MeshPhysicalMaterial. (js-obj "color" color))]
+    (.computeBoundingBox geometry)
+    (let [bbox (.-boundingBox geometry)]
+      (.translate geometry
+                  (* -0.5 (- (.-x (.-max bbox)) (.-x (.-min bbox))))
+                  (* -0.5 (- (.-y (.-max bbox)) (.-y (.-min bbox))))
+                  (* -0.5 (- (.-z (.-max bbox)) (.-z (.-min bbox)))))
+      (t/Mesh. geometry material))))
 
-;; globals
-(set! (.-enabled t/Cache) true)
-(def canvas (.querySelector js/document "#grid"))
-(def renderer (t/WebGLRenderer. (js-obj "canvas" canvas "antialias" true)))
-(def camera (t/PerspectiveCamera. 45 1.3 0.1 2000))
-(def scene (t/Scene.))
-(set! (.-background scene) (t/Color. "lightblue"))
-(def control (ArcballControls. camera canvas scene))
+(defn title-scene
+  [_]
+  (let [scene (t/Scene.)
+        light (t/PointLight. "white" 10000)
+        dir-light (t/DirectionalLight. "white" 1)]
+    (bst/pos light 20 30 40)
+    (.add scene light)
+    (bst/pos dir-light -4 -4 10)
+    (.add scene dir-light)
+    (bst/load
+     (bst/get-loader :font)
+     "fonts/helvetiker_bold.typeface.json"
+     (fn [font]
+       (let [title (get-text font "BATTLESHIP" 3 1 "red")
+             gabor (get-text font ":gabor" 1 0.5 "green")
+             anykey (get-text font "press anykey" 1 0.5 "yellow")]           
+         (bst/pos title 0 7 0)
+         (.add scene title)
+         (bst/pos gabor 10 4.5 1)
+         (.add scene gabor)
+         (bst/pos anykey 0 -5 0)
+         (.add scene anykey)
+         (bst/pos camera 0 0 30))))
+    (bst/load
+     (bst/get-loader :model)
+     "models/ship.glb"
+     (fn [model]
+       (let [boat (.-scene model)]
+         (bst/scale boat 2 2 2)
+         (bst/pos boat 0 -1 0)
+         (.add scene boat)
+         (.setAnimationLoop renderer (fn [_]
+                                       (let [y (.-y (.-rotation boat))]
+                                         (bst/rot boat 0 (+ y 0.01) 0)
+                                         (.render renderer scene camera)))))))))
 
-(def *game-state (atom {}))
+(defn players
+  [_]
+  (let [scene (t/Scene.)
+        light (t/PointLight. "white" 10000)
+        dir-light (t/DirectionalLight. "white" 1)]
+    (bst/pos light 20 30 40)
+    (.add scene light)
+    (bst/pos dir-light -2 -2 10)
+    (.add scene dir-light)
+    (bst/load
+     (bst/get-loader :font)
+     "fonts/helvetiker_bold.typeface.json"
+     (fn [font]
+       (let [title (get-text font "YOU SUCK!" 3 1 "orange")]
+         (bst/pos title 0 0 0)
+         (.add scene title)
+         (bst/pos camera 0 0 20)
+         (.setAnimationLoop renderer (fn [_] (.render renderer scene camera))))))))
 
-(.set (.-position camera) 2 7 20)
-(.lookAt camera 0 0 0)
-(.update control)
-
-;; handlers
-
-(.addEventListener js/window "resize" (on-resize-window-builder renderer camera control))
-
-;; do something
-
-(def light (t/PointLight. 0xffffff 80000))
-(.set (.-position light) 100 100 5)
-(.add scene light)
-
-(def plane-geometry (t/PlaneGeometry. 10 10))
-(.rotateX plane-geometry (/ js/Math.PI -2))
-(def plane-material (t/MeshPhysicalMaterial. (js-obj "color" "cornflowerblue")))
-(def plane (t/Mesh. plane-geometry plane-material))
-(set! (.-receiveShadow plane) true)
-(.add scene plane)
-
-(def grid (t/GridHelper. 10 10))
-(.set (.-position grid) 0 0.01 0)
-(.add scene grid)
-
-(defn animation
-  "animation loop used by renderer, do and draw stuff here"
-  []
-  (.render renderer scene camera))
-  
 ;; shadow-cljs stuff
 
 (defn init []
-  (js/console.log "init")
-  (.setAnimationLoop renderer animation)
-  (.dispatchEvent js/window (js/Event. "resize")))
+  (e/listen canvas "title-scene" title-scene)
+  (e/listen canvas "players" players)
+  (.dispatchEvent js/window (js/Event. "resize"))
+  (e/dispatch canvas "title-scene")
+  (js/console.log "init"))
 
 (defn start []
+  (e/listen canvas "title-scene" title-scene)
   (js/console.log "start"))
 
 (defn stop []
+  (.removeEventListener canvas "title-scene" title-scene false)
+  (.removeEventListener canvas "players" players false)
   (js/console.log "stop"))
 
 
 (comment
-
-  (object? (js-obj "ernie" 1))
-  (object? (FontLoader.))
-
 
   *)

@@ -83,6 +83,8 @@
 
   *a
 
+  (instance? cljs.core.Atom *a)
+
   (reset! *a update :ready true)
 
   (assoc @*a :ready true)

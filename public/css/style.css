@@ -10,3 +10,7 @@ body {
 canvas {
     background-color: cornflowerblue;
 }
+
+canvas:focus {
+    outline: none;
+}
