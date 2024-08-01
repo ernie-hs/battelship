@@ -3,7 +3,7 @@
             [three :as t]
             ["three/addons/loaders/FontLoader.js" :refer [FontLoader]]
             ["three/addons/loaders/GLTFLoader.js" :refer [GLTFLoader]]))
-
+             
 ;; three.js convienience/wrappers
 
 (defprotocol Object3D

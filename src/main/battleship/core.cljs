@@ -5,10 +5,9 @@
             ["three/addons/controls/ArcballControls.js" :refer [ArcballControls]]
             ["three/addons/geometries/TextGeometry.js" :refer [TextGeometry]]))
 
-
 (defonce canvas (.querySelector js/document "#grid"))
 (defonce renderer (t/WebGLRenderer. (js-obj "canvas" canvas
-                                            "antialising" true)))
+                                            "antialias" true)))
 (defonce camera (t/PerspectiveCamera. 45 1.3 0.1 1000))
  
 (e/listen js/window "resize"
@@ -46,7 +45,7 @@
      (bst/get-loader :font)
      "fonts/helvetiker_bold.typeface.json"
      (fn [font]
-       (let [title (get-text font "BATTLESHIP" 3 1 "red")
+       (let [title (get-text font "BATTLESHIT" 3 1 "red")
              gabor (get-text font ":gabor" 1 0.5 "green")
              anykey (get-text font "press anykey" 1 0.5 "yellow")]           
          (bst/pos title 0 7 0)
@@ -55,7 +54,7 @@
          (.add scene gabor)
          (bst/pos anykey 0 -5 0)
          (.add scene anykey)
-         (bst/pos camera 0 0 30))))
+         (bst/pos camera 0 1.5 30))))
     (bst/load
      (bst/get-loader :model)
      "models/ship.glb"
