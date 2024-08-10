@@ -4,12 +4,15 @@
 
 (defprotocol Events
   (listen [this event-name event-fn] "listen for an event on this object")
+  (un-listen [this event-name event-fn] "stop listening for an event on this object")
   (dispatch [this event-name] [this event-name event-detail] "dispatch a js/CustomEvent to this object"))
 
 (extend-type js/EventTarget
   Events
   (listen [this event-name event-fn]
     (.addEventListener this event-name event-fn))
+  (un-listen [this event-name event-fn]
+    (.removeEventListener this event-name event-fn))
   (dispatch
     ([this event-name]
      (.dispatchEvent this (js/CustomEvent. event-name)))
